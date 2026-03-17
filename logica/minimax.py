@@ -1,32 +1,34 @@
-# Minimax algorithm for AI decision making.
-
 from config import PENALTY_DIVISORS, PENALTY_AMOUNT, WIN_THRESHOLD
 
-
+# Simulating single move
 def _simulate(number, multiplier, prev_was_even, inverted):
     result = number * multiplier
+    is_even = result % 2 == 0
+
+    raw_score = 1 if is_even else -1
+    score_change = raw_score if not inverted else -raw_score
+
     next_inverted = False
-    score_change = (1 if result % 2 == 0 else -1) if not inverted else (1 if result % 2 != 0 else -1)
-    if result % 2 == 0 and prev_was_even:
+    if is_even and prev_was_even:
         result -= 1
         next_inverted = True
         if any(result % d == 0 for d in PENALTY_DIVISORS):
             score_change -= PENALTY_AMOUNT
+
     return result, score_change, next_inverted
 
-
+# Minimax implimentation 
 def _run(number, prev_was_even, inverted, scores, depth, max_depth, is_ai_turn, tree_log, parent_id):
     if number >= WIN_THRESHOLD or depth == max_depth:
         return scores[0] - scores[1], None
 
-    best_diff = None
-    best_mult = None
-    best_node_id = None
+    best = (None, None, None)  # (diff, mult, node_id)
 
     for mult in (2, 3):
         result, sc, next_inv = _simulate(number, mult, prev_was_even, inverted)
-        new_scores = [scores[0] + (sc if is_ai_turn else 0),
-                      scores[1] + (sc if not is_ai_turn else 0)]
+
+        new_scores = scores[:]
+        new_scores[0 if is_ai_turn else 1] += sc
 
         node_id = len(tree_log)
         tree_log.append({
@@ -39,23 +41,19 @@ def _run(number, prev_was_even, inverted, scores, depth, max_depth, is_ai_turn, 
             result, result % 2 == 0 and not next_inv,
             next_inv, new_scores,
             depth + 1, max_depth, not is_ai_turn,
-            tree_log, node_id
+            tree_log, node_id,
         )
 
-        if is_ai_turn:
-            if best_diff is None or future_diff > best_diff:
-                best_diff, best_mult, best_node_id = future_diff, mult, node_id
-        else:
-            if best_diff is None or future_diff < best_diff:
-                best_diff, best_mult, best_node_id = future_diff, mult, node_id
+        is_better = best[0] is None or (
+            future_diff > best[0] if is_ai_turn else future_diff < best[0]
+        )
+        if is_better:
+            best = (future_diff, mult, node_id)
 
-    if best_node_id is not None:
-        tree_log[best_node_id]["chosen"] = True
+    tree_log[best[2]]["chosen"] = True
+    return best[0], best[1]
 
-    return best_diff, best_mult
-
-
+# Picks the best multiplier
 def pick(number, prev_was_even, inverted, ai_score, opp_score, tree_log, max_depth):
-    scores = [ai_score, opp_score]
-    _, best_mult = _run(number, prev_was_even, inverted, scores, 0, max_depth, True, tree_log, None)
+    _, best_mult = _run(number, prev_was_even, inverted, [ai_score, opp_score], 0, max_depth, True, tree_log, None)
     return best_mult or 2
