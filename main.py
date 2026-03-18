@@ -1,5 +1,7 @@
 from cProfile import label
 from tkinter import *
+from logica_real import *
+from logica_real.math import run_game
 
 CHOOSING_NUMBER = 0
 INVALID_NUMBER = 0
@@ -20,10 +22,10 @@ def two_players():
     button = Button(root, text="Start Game", width=8, command=lambda: print(spinbox.get())) 
     button.pack(pady=10)    
 
-def start_game(num):  
+def start_game(start_num: int, algo_choice: int):  
     # Check if number is valid
     invalid_num_label = Label(root, text="Invalid number", font=("Arial", 12), fg="red")
-    if int(num) < 5 or int(num) > 15:
+    if start_num < 5 or start_num > 15:
         global INVALID_NUMBER
         if INVALID_NUMBER:
             return
@@ -34,14 +36,11 @@ def start_game(num):
     INVALID_NUMBER = 0
     invalid_num_label.config(text="") # Remove invalid number label if it exists
 
-    current_number_label = Label(root, text="Current number: " + str(num), font=("Arial", 12))
+    current_number_label = Label(root, text="Current number: " + str(start_num), font=("Arial", 12))
     current_number_label.pack(pady=15)
 
-    player1_score_label = Label(root, text="Player 1: 0", font=("Arial", 12))
-    player1_score_label.pack(pady=5)
-
-    computer_score_label = Label(root, text="Computer: 0", font=("Arial", 12))
-    computer_score_label.pack(pady=5)
+    score_label = Label(root, text="Player: 0 | Computer: 0", font=("Arial", 12))
+    score_label.pack(pady=5)
 
     turn_label = Label(root, text="Turn: Player 1", font=("Arial", 12))
     turn_label.pack(pady=15)
@@ -55,32 +54,35 @@ def start_game(num):
     button = Button(root, text="Make Move", width=10, command=lambda: print(choose_multiply_spinbox.get()))
     button.pack(pady=10)
 
-    calc_label = Label(root, text=str(num) + " x " + str(choose_multiply_spinbox.get()) + " = " + str(int(num) * int(choose_multiply_spinbox.get())), font=("Arial", 12))
+    calc_label = Label(root, text=str(start_num) + " x " + str(choose_multiply_spinbox.get()) + " = "
+                        + str(start_num * int(choose_multiply_spinbox.get())), font=("Arial", 12))
     calc_label.pack(pady=15)
 
-def choose_number():    
+def choose_number(algo_choice: int):    
     global CHOOSING_NUMBER
     if CHOOSING_NUMBER:
         return
     CHOOSING_NUMBER = 1
 
+    mode = 2 if algo_choice == 1 or 2 else 1 # If algo_choice is 1 or 2, set mode to 2 (vs computer), otherwise set to 1 (two players)
+
     label = Label(root, text="Choose a number between 5 and 15", font=("Arial", 12))
     label.pack(pady=15)
 
-    spinbox = Spinbox(root, from_=5, to=15, width=5, font=("Arial", 15)) #, command=lambda: print(spinbox.get())
-    spinbox.pack()  
+    start_num_spinbox = Spinbox(root, from_=5, to=15, width=5, font=("Arial", 15))
+    start_num_spinbox.pack()  
 
-    button = Button(root, text="Start Game", width=8, command=lambda: start_game(spinbox.get())) 
-    button.pack(pady=10)
+    start_button = Button(root, text="Start Game", width=8, command=lambda: run_game(mode, algo_choice, int(start_num_spinbox.get()))) 
+    start_button.pack(pady=10)
 
 def vs_computer():
     label = Label(root, text="Choose algorithm:", font=("Arial", 12))
     label.pack(pady=15)
 
-    button = Button(root, text="Minimax", width=10, command=choose_number)
+    button = Button(root, text="Minimax", width=10, command=lambda: choose_number(1))
     button.pack(pady=5)
 
-    button = Button(root, text="Alpha-Beta", width=10, command=choose_number)
+    button = Button(root, text="Alpha-Beta", width=10, command=lambda: choose_number(2))
     button.pack(pady=5)
 
 
