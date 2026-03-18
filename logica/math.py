@@ -12,7 +12,7 @@ from config import (
 )
 
 
-# ── Input helpers ─────────────────────────────────────────────────
+# Input helpers
 
 def _get_start_number():
     while True:
@@ -56,7 +56,7 @@ def _get_multiplier(player_name, number):
             print("Enter 2 or 3.")
 
 
-# ── Game logic ────────────────────────────────────────────────────
+# Game logic
 
 def apply_move(number, multiplier, prev_was_even, inverted):
     """Apply one move and return (result, score_change, next_inverted, log)."""
@@ -91,7 +91,7 @@ def _determine_winner(scores):
     return None
 
 
-# ── Main game loop ────────────────────────────────────────────────
+# Main game loop
 
 def run_game():
     print("=== NUMBER GAME ===")
