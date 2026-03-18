@@ -5,10 +5,6 @@ from config import TREE_OUTPUT_FILE
 
 
 def _build_chosen_path(tree_log):
-    """
-    Walk from each root downward always following the chosen child.
-    Returns a set of node IDs that form the actual chosen path(s).
-    """
     children = {}
     for node in tree_log:
         pid = node["parent"]
@@ -32,7 +28,6 @@ def _build_chosen_path(tree_log):
 
 
 def build_lines(tree_log):
-    """Convert flat tree_log into minimal ASCII-tree strings."""
     children = {}
     for node in tree_log:
         pid = node["parent"]
@@ -68,7 +63,6 @@ def build_lines(tree_log):
 
 
 def print_all_trees(all_trees, algo_name):
-    """Print one tree per computer turn, then save all to file."""
     all_lines = []
 
     for move_num, from_number, tree_log in all_trees:

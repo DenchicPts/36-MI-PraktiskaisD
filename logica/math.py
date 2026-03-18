@@ -85,9 +85,9 @@ def apply_move(number, multiplier, prev_was_even, inverted):
 
 def _determine_winner(scores):
     if scores[0] < scores[1]:
-        return 0
-    elif scores[1] < scores[0]:
         return 1
+    elif scores[1] < scores[0]:
+        return 0
     return None
 
 
@@ -156,7 +156,7 @@ def run_game():
     if winner is None:
         print("Result: DRAW!")
     else:
-        print(f"Winner: {names[winner]}!  (lowest score wins)")
+        print(f"Winner: {names[winner]}!")
 
     if mode == 2 and all_trees:
         tree_display.print_all_trees(all_trees, algo_name)
