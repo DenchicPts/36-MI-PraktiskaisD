@@ -1,10 +1,10 @@
 # All game logic lives here.
 # main.py only calls run_game().
-from tkinter import *
-from logica_real import minimax
-from logica_real import alphabeta
-from logica_real import tree_display
-from logica_real.config import (
+
+from logica import minimax
+from logica import alphabeta
+from logica import tree_display
+from logica.config import (
     AI_SEARCH_DEPTH,
     START_NUMBER_MIN, START_NUMBER_MAX,
     WIN_THRESHOLD,
@@ -90,17 +90,24 @@ def _determine_winner(scores):
         return 0
     return None
 
+# def _determine_winner(scores):
+#     if scores[0] < scores[1]:
+#         return 1
+#     elif scores[1] < scores[0]:
+#         return 0
+#     return None
+
 
 # Main game loop
 
-def run_game(mode: int, algo_choice: int, number: int):
+def run_game():
     print("=== NUMBER GAME ===")
-    # mode = _get_mode()
+    mode = _get_mode()
 
     algo = None
     algo_name = ""
     if mode == 2:
-        # algo_choice = _get_algorithm()
+        algo_choice = _get_algorithm()
         if algo_choice == 1:
             algo = minimax
             algo_name = "Minimax"
@@ -108,7 +115,7 @@ def run_game(mode: int, algo_choice: int, number: int):
             algo = alphabeta
             algo_name = "Alpha-Beta"
 
-    # number = _get_start_number()
+    number = _get_start_number()
 
     scores = [0, 0]
     prev_was_even = False
@@ -119,28 +126,7 @@ def run_game(mode: int, algo_choice: int, number: int):
     all_trees = []
     move_number = 0
 
-    root = Tk()
-    root.title("Player vs Computer" if mode == 2 else "Two Players")
-
     while number < WIN_THRESHOLD:
-        current_number_label = Label(root, text="Current number: " + str(number), font=("Arial", 12))
-        current_number_label.pack(pady=15)
-
-        score_label = Label(root, text=f"Player: {scores[0]} | {names[1]}: {scores[1]}", font=("Arial", 12))
-        score_label.pack(pady=5)
-
-        turn_label = Label(root, text=f"Turn: {names[turn]}", font=("Arial", 12))
-        turn_label.pack(pady=15)
-
-        move_label = Label(root, text="Player 1, multiply by 2 or 3", font=("Arial", 12))
-        move_label.pack(pady=5)
-
-        choose_multiply_spinbox = Spinbox(root, values=(2, 3), width=5, font=("Arial", 15)) #, command=lambda: print(choose_multiply_spinbox.get())
-        choose_multiply_spinbox.pack()
-
-        button = Button(root, text="Make Move", width=10, command=lambda: print(choose_multiply_spinbox.get()))
-        button.pack(pady=10)
-        
         print(f"\n{'─' * 44}")
         print(f"Current number : {number}{' [YOUR RULES ARE INVERTED]' if inverted else ''}")
         print(f"{names[0]}: {scores[0]} pts  |  {names[1]}: {scores[1]} pts")
@@ -152,7 +138,7 @@ def run_game(mode: int, algo_choice: int, number: int):
             mult = algo.pick(number, prev_was_even, inverted, scores[1], scores[0], turn_log, AI_SEARCH_DEPTH)
             all_trees.append((move_number, number, turn_log))
             print(f"Computer picks: x{mult}")
-        else:   
+        else:
             mult = _get_multiplier(names[turn], number)
 
         raw_result = number * mult
@@ -181,3 +167,54 @@ def run_game(mode: int, algo_choice: int, number: int):
 
     if mode == 2 and all_trees:
         tree_display.print_all_trees(all_trees, algo_name)
+
+        # Add this to the bottom of math.py, keeping everything else the same
+
+class GameState:
+    """Holds all mutable game state. Passed around instead of local variables."""
+    def __init__(self, mode: int, algo_choice: int, number: int):
+        from logica import minimax, alphabeta
+        self.number = number
+        self.mode = mode
+        self.scores = [0, 0]
+        self.prev_was_even = False
+        self.inverted = False
+        self.turn = 0
+        self.names = ["Player 1", "Player 2" if mode == 1 else "Computer"]
+        self.all_trees = []
+        self.move_number = 0
+        self.algo = minimax if algo_choice == 1 else alphabeta
+        self.algo_name = "Minimax" if algo_choice == 1 else "Alpha-Beta"
+        self.finished = False
+
+    def is_computer_turn(self):
+        return self.mode == 2 and self.turn == 1
+
+    def apply(self, multiplier: int):
+        """Apply a move and advance state. Returns the log lines."""
+        raw = self.number * multiplier
+        result, sc, next_inverted, log = apply_move(
+            self.number, multiplier, self.prev_was_even, self.inverted
+        )
+        self.scores[self.turn] += sc
+        self.prev_was_even = raw % 2 == 0 and not next_inverted
+        self.inverted = next_inverted
+        self.number = result
+        self.turn = 1 - self.turn
+        if self.number >= WIN_THRESHOLD:
+            self.finished = True
+        return log
+
+    def computer_move(self):
+        """Run the AI and return (multiplier, tree_log)."""
+        self.move_number += 1
+        turn_log = []
+        mult = self.algo.pick(
+            self.number, self.prev_was_even, self.inverted,
+            self.scores[1], self.scores[0], turn_log, AI_SEARCH_DEPTH
+        )
+        self.all_trees.append((self.move_number, self.number, turn_log))
+        return mult, turn_log
+
+    def winner(self):
+        return _determine_winner(self.scores)

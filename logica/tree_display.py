@@ -1,7 +1,7 @@
 # Tree rendering and file output.
 # Used by game_math.py after a vs-Computer game.
 
-from logica_real.config import TREE_OUTPUT_FILE
+from logica.config import TREE_OUTPUT_FILE
 
 
 def _build_chosen_path(tree_log):
