@@ -1,11 +1,9 @@
 # All game logic lives here.
 # main.py only calls run_game().
 
-import minimax
-import alphabeta
-import tree_display
+from logica import minimax, alphabeta, tree_display
 import time
-from config import (
+from logica.config import (
     AI_SEARCH_DEPTH,
     START_NUMBER_MIN, START_NUMBER_MAX,
     WIN_THRESHOLD,
@@ -186,7 +184,6 @@ def run_game():
     if mode == 2 and all_trees:
         tree_display.print_all_trees(all_trees, algo_name)
 
-        # Add this to the bottom of math.py, keeping everything else the same
 
 class GameState:
     """Holds all mutable game state. Passed around instead of local variables."""
@@ -201,6 +198,9 @@ class GameState:
         self.names = ["Player 1", "Player 2" if mode == 1 else "Computer"]
         self.all_trees = []
         self.move_number = 0
+        self.total_generated = 0
+        self.total_evaluated = 0
+        self.total_ai_time = 0.0
         self.algo = minimax if algo_choice == 1 else alphabeta
         self.algo_name = "Minimax" if algo_choice == 1 else "Alpha-Beta"
         self.finished = False
@@ -227,10 +227,15 @@ class GameState:
         """Run the AI and return (multiplier, tree_log)."""
         self.move_number += 1
         turn_log = []
-        mult = self.algo.pick(
+        start_time = time.perf_counter()
+        mult, stats = self.algo.pick(
             self.number, self.prev_was_even, self.inverted,
             self.scores[1], self.scores[0], turn_log, AI_SEARCH_DEPTH
         )
+        move_time = time.perf_counter() - start_time
+        self.total_ai_time += move_time
+        self.total_generated += stats["generated"]
+        self.total_evaluated += stats["evaluated"]
         self.all_trees.append((self.move_number, self.number, turn_log))
         return mult, turn_log
 

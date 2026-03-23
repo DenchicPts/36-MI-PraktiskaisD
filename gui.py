@@ -165,6 +165,13 @@ def screen_result(root, state: GameState):
     result_text = "It's a draw!" if w is None else f"{state.names[w]} wins!"
     make_label(root, result_text, font=("Arial", 14, "bold")).pack(pady=8)
 
+    if state.mode == 2:
+        avg_ai_time = state.total_ai_time / state.move_number if state.move_number > 0 else 0.0
+        make_label(root, "Computer search totals:", font=("Arial", 12, "bold")).pack(pady=(6, 2))
+        make_label(root, f"Generated nodes: {state.total_generated}").pack()
+        make_label(root, f"Evaluated nodes: {state.total_evaluated}").pack()
+        make_label(root, f"Average move time: {avg_ai_time * 1000:.3f} ms").pack(pady=(0, 6))
+
     if state.mode == 2 and state.all_trees:
         make_button(root, "Show AI Trees",
                     lambda: tree_display.print_all_trees(state.all_trees, state.algo_name)
