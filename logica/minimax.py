@@ -33,7 +33,7 @@ def _simulate(number, multiplier, prev_was_even, inverted):
 
     return result, score_change, next_inverted
 
-def _run(number, prev_was_even, inverted, scores, depth, max_depth, is_ai_turn, tree_log, parent_id):
+def _run(number, prev_was_even, inverted, scores, depth, max_depth, is_ai_turn, tree_log, parent_id, stats):
     """
     Minimax search: AI maximizes score difference, opponent minimizes it.
     Stops at WIN_THRESHOLD or max_depth. Logs all nodes to tree_log.
@@ -55,12 +55,14 @@ def _run(number, prev_was_even, inverted, scores, depth, max_depth, is_ai_turn, 
     """
 
     if number >= WIN_THRESHOLD or depth == max_depth:
+        stats["evaluated"] += 1
         return scores[0] - scores[1], None
 
     best = (None, None, None)  # (diff, mult, node_id)
 
     for mult in (2, 3):
         result, sc, next_inv = _simulate(number, mult, prev_was_even, inverted)
+        stats["generated"] += 1
 
         new_scores = scores[:]
         new_scores[0 if is_ai_turn else 1] += sc
@@ -76,7 +78,7 @@ def _run(number, prev_was_even, inverted, scores, depth, max_depth, is_ai_turn, 
             result, result % 2 == 0 and not next_inv,
             next_inv, new_scores,
             depth + 1, max_depth, not is_ai_turn,
-            tree_log, node_id,
+            tree_log, node_id, stats,
         )
 
         is_better = best[0] is None or (
@@ -105,5 +107,6 @@ def pick(number, prev_was_even, inverted, ai_score, opp_score, tree_log, max_dep
         int: Chosen multiplier (2 or 3).
     """
 
-    _, best_mult = _run(number, prev_was_even, inverted, [ai_score, opp_score], 0, max_depth, True, tree_log, None)
-    return best_mult or 2
+    stats = {"generated": 0, "evaluated": 0}
+    _, best_mult = _run(number, prev_was_even, inverted, [ai_score, opp_score], 0, max_depth, True, tree_log, None, stats)
+    return best_mult or 2, stats

@@ -1,10 +1,11 @@
 # All game logic lives here.
 # main.py only calls run_game().
 
-from logica import minimax
-from logica import alphabeta
-from logica import tree_display
-from logica.config import (
+import minimax
+import alphabeta
+import tree_display
+import time
+from config import (
     AI_SEARCH_DEPTH,
     START_NUMBER_MIN, START_NUMBER_MAX,
     WIN_THRESHOLD,
@@ -125,6 +126,9 @@ def run_game():
     # Each computer turn gets its own tree: list of (move_number, tree_log)
     all_trees = []
     move_number = 0
+    total_generated = 0
+    total_evaluated = 0
+    total_ai_time = 0.0
 
     while number < WIN_THRESHOLD:
         print(f"\n{'─' * 44}")
@@ -135,9 +139,16 @@ def run_game():
         if mode == 2 and turn == 1:
             move_number += 1
             turn_log = []
-            mult = algo.pick(number, prev_was_even, inverted, scores[1], scores[0], turn_log, AI_SEARCH_DEPTH)
+            start_time = time.perf_counter()
+            mult, stats = algo.pick(number, prev_was_even, inverted, scores[1], scores[0], turn_log, AI_SEARCH_DEPTH)
+            move_time = time.perf_counter() - start_time
+            total_ai_time += move_time
+            total_generated += stats["generated"]
+            total_evaluated += stats["evaluated"]
             all_trees.append((move_number, number, turn_log))
             print(f"Computer picks: x{mult}")
+            print(f"  Computer search nodes -> generated: {stats['generated']}, evaluated: {stats['evaluated']}")
+            print(f"  Computer move time -> {move_time * 1000:.3f} ms")
         else:
             mult = _get_multiplier(names[turn], number)
 
@@ -164,6 +175,13 @@ def run_game():
         print("Result: DRAW!")
     else:
         print(f"Winner: {names[winner]}!")
+
+    if mode == 2:
+        avg_ai_time = total_ai_time / move_number if move_number > 0 else 0.0
+        print("Computer search totals:")
+        print(f"  Generated nodes: {total_generated}")
+        print(f"  Evaluated nodes: {total_evaluated}")
+        print(f"  Average move time: {avg_ai_time * 1000:.3f} ms")
 
     if mode == 2 and all_trees:
         tree_display.print_all_trees(all_trees, algo_name)

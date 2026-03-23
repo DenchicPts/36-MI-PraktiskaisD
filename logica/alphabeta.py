@@ -34,7 +34,7 @@ def _simulate(number, multiplier, prev_was_even, inverted):
     return result, score_change, next_inverted
 
 
-def _run(number, prev_was_even, inverted, scores, depth, max_depth, is_ai_turn, alpha, beta, tree_log, parent_id):
+def _run(number, prev_was_even, inverted, scores, depth, max_depth, is_ai_turn, alpha, beta, tree_log, parent_id, stats):
     """
     Alpha-beta minimax: AI maximizes score difference, opponent minimizes it.
     Prunes branches when alpha >= beta. Stops at WIN_THRESHOLD or max_depth.
@@ -58,6 +58,7 @@ def _run(number, prev_was_even, inverted, scores, depth, max_depth, is_ai_turn, 
         best_mult (int | None): Best multiplier (2 or 3), or None at terminal nodes.
     """
     if number >= WIN_THRESHOLD or depth == max_depth:
+        stats["evaluated"] += 1
         return scores[0] - scores[1], None
 
     best_mult = None
@@ -65,6 +66,7 @@ def _run(number, prev_was_even, inverted, scores, depth, max_depth, is_ai_turn, 
 
     for mult in (2, 3):
         result, sc, next_inv = _simulate(number, mult, prev_was_even, inverted)
+        stats["generated"] += 1
 
         new_scores = scores[:]
         new_scores[0 if is_ai_turn else 1] += sc
@@ -80,7 +82,7 @@ def _run(number, prev_was_even, inverted, scores, depth, max_depth, is_ai_turn, 
             result, result % 2 == 0 and not next_inv,
             next_inv, new_scores,
             depth + 1, max_depth, not is_ai_turn,
-            alpha, beta, tree_log, node_id,
+            alpha, beta, tree_log, node_id, stats,
         )
 
         if is_ai_turn:
@@ -118,5 +120,6 @@ def pick(number, prev_was_even, inverted, ai_score, opp_score, tree_log, max_dep
     Returns:
         int: Chosen multiplier (2 or 3).
     """
-    _, best_mult = _run(number, prev_was_even, inverted, [ai_score, opp_score], 0, max_depth, True, None, None, tree_log, None)
-    return best_mult or 2
+    stats = {"generated": 0, "evaluated": 0}
+    _, best_mult = _run(number, prev_was_even, inverted, [ai_score, opp_score], 0, max_depth, True, None, None, tree_log, None, stats)
+    return best_mult or 2, stats
