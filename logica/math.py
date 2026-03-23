@@ -85,9 +85,9 @@ def apply_move(number, multiplier, prev_was_even, inverted):
 
 def _determine_winner(scores):
     if scores[0] < scores[1]:
-        return 1
-    elif scores[1] < scores[0]:
         return 0
+    elif scores[0] > scores[1]:
+        return 1
     return None
 
 

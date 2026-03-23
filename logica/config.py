@@ -1,4 +1,4 @@
-# ── AI configuration ──────────────────────────────────────────────
+# AI configuration
 # How many moves ahead the computer looks.
 AI_SEARCH_DEPTH = 3
 
@@ -6,7 +6,7 @@ AI_SEARCH_DEPTH = 3
 # Positive = AI wants higher difference; negative = AI plays defensively.
 AI_SCORE_WEIGHT = 1
 
-# ── Game rules ────────────────────────────────────────────────────
+# Game rules
 # Number range the player can choose at game start.
 START_NUMBER_MIN = 5
 START_NUMBER_MAX = 15
@@ -19,6 +19,6 @@ WIN_THRESHOLD = 1000
 PENALTY_DIVISORS = (5, 7)
 PENALTY_AMOUNT = 2
 
-# ── Output ────────────────────────────────────────────────────────
+# Output
 # File where the AI decision tree is saved after each vs-Computer game.
 TREE_OUTPUT_FILE = "../tree_output.txt"
