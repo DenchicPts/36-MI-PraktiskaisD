@@ -96,16 +96,16 @@ def screen_game(root, state: GameState):
     ctrl = tk.Frame(root)
     ctrl.pack(pady=4)
 
-    spin_label = tk.Label(ctrl, text="Multiply by:", font=("Arial", 11))
-    spin_label.grid(row=0, column=0, padx=4)
+    btn2 = tk.Button(ctrl, text="2", font=("Arial", 13, "bold"),
+                 relief="groove", padx=18, pady=6)
+    btn3 = tk.Button(ctrl, text="3", font=("Arial", 13, "bold"),
+                 relief="groove", padx=18, pady=6)
+    btn2.grid(row=0, column=0, padx=12)
+    btn3.grid(row=0, column=1, padx=12)
 
-    mult_spin = tk.Spinbox(ctrl, values=(2, 3), width=4,
-                           font=("Arial", 13), justify="center", state="readonly")
-    mult_spin.grid(row=0, column=1, padx=4)
-
-    move_btn = tk.Button(ctrl, text="Make Move", font=("Arial", 11),
-                         relief="groove", pady=3)
-    move_btn.grid(row=0, column=2, padx=8)
+    def set_buttons_state(s):
+        btn2.config(state=s)
+        btn3.config(state=s)
 
     def refresh():
         num_var.set(f"Current number: {state.number}")
@@ -122,31 +122,27 @@ def screen_game(root, state: GameState):
         show_log(log)
         if state.finished:
             # disable controls, show result after a short delay
-            move_btn.config(state="disabled")
-            mult_spin.config(state="disabled")
+            set_buttons_state("disabled")
             root.after(900, lambda: screen_result(root, state))
             return
         refresh()
         # if it's now the computer's turn, schedule it
         if state.is_computer_turn():
-            move_btn.config(state="disabled")
-            mult_spin.config(state="disabled")
+            set_buttons_state("disabled")
             root.after(600, computer_turn)
 
     def computer_turn():
         mult, _ = state.computer_move()
         show_log([f"Computer picks: ×{mult}"])
         do_move(mult)
-        move_btn.config(state="normal")
-        mult_spin.config(state="readonly")
+        set_buttons_state("normal")
 
-    move_btn.config(command=lambda: do_move(int(mult_spin.get())))
+    btn2.config(command=lambda: do_move(2))
+    btn3.config(command=lambda: do_move(3))
 
     # hide controls on computer turn
     if state.is_computer_turn():
-        spin_label.grid_remove()
-        mult_spin.grid_remove()
-        move_btn.config(text="Computer thinking…", state="disabled")
+        set_buttons_state("disabled")
         root.after(600, computer_turn)
 
     refresh()
