@@ -121,12 +121,29 @@ def run_game():
     inverted = False
     turn = 0
     names = ["Player 1", "Player 2" if mode == 1 else "Computer"]
-    # Each computer turn gets its own tree: list of (move_number, tree_log)
+    
+    # ═══ DATU STRUKTŪRA: all_trees — visu AI koku vēsture ═══
+    # all_trees ir saraksts ar tuplēm, where katra tuple ir:
+    #   (move_number, from_number, tree_log)
+    # Nozīme:
+    #   move_number (int)    — Kurtais AI gājiens (1, 2, 3, ...)
+    #   from_number (int)    — Sākotnējais skaitlis, kad meklēšana sākās
+    #   tree_log (list[dict])— Visi mezgli, kas apsekoti šajā AI gājienā:
+    #       Katrs mezgls (dict) satur:
+    #           "id": unikālais indekss
+    #           "parent": vecāka ID (None = root)
+    #           "result": iegūtais skaitlis
+    #           "is_ai": True jo gājiens
+    #           "chosen": True ja labā ceļa daļa
+    #           "pruned": True ja atgriezts
     all_trees = []
     move_number = 0
-    total_generated = 0
-    total_evaluated = 0
-    total_ai_time = 0.0
+    
+    # ═══ DATU STRUKTŪRA: stats — veiktspējas metriki ═══
+    # Šie skaitļi norāda, cik daudz darbības CPU veica meklēšanā
+    total_generated = 0  # int — Kopējais apsekoto mezglu skaits (visos AI gājienos)
+    total_evaluated = 0  # int — Kopējais lapu mezglu skaits (terminal nodes)
+    total_ai_time = 0.0  # float — Kopējais AI meklēšanas laiks sekundēs
 
     while number < WIN_THRESHOLD:
         print(f"\n{'─' * 44}")
@@ -136,14 +153,21 @@ def run_game():
 
         if mode == 2 and turn == 1:
             move_number += 1
-            turn_log = []
+            turn_log = []  # Jauns tree_log katram AI gājienam
             start_time = time.perf_counter()
             mult, stats = algo.pick(number, prev_was_even, inverted, scores[1], scores[0], turn_log, AI_SEARCH_DEPTH)
             move_time = time.perf_counter() - start_time
             total_ai_time += move_time
+            # ═══ DATU STRUKTŪRA: stats dict papildināšana ═══
+            # stats atgriež: {"generated": int, "evaluated": int}
+            # Nozīme:
+            #   "generated" — Kopējais apsekoto mezglu skaits šajā gājienā
+            #   "evaluated" — Lapu mezglu skaits (tikai terminal nodes)
             total_generated += stats["generated"]
             total_evaluated += stats["evaluated"]
-            all_trees.append((move_number, number, turn_log))
+            # ═══ DATU STRUKTŪRA: all_trees papildināšana ═══
+            # Tiek pievienota jauna tuple: (move_number, from_number, tree_log)
+            all_trees.append((move_number, number, turn_log))  # turn_log == tree_log (to pats objekts)
             print(f"Computer picks: x{mult}")
             print(f"  Computer search nodes -> generated: {stats['generated']}, evaluated: {stats['evaluated']}")
             print(f"  Computer move time -> {move_time * 1000:.3f} ms")
@@ -186,7 +210,52 @@ def run_game():
 
 
 class GameState:
-    """Holds all mutable game state. Passed around instead of local variables."""
+    """
+    Galvenā datu struktūra, kas glabā visu pašreizējo spēles stāvokli.
+    Tiek nodota starp GUI funkcijām, lai izvairītos no vietējiem mainīgajiem.
+    
+    Glabātie dati:
+        === Spēles pozīcija ===
+        number (int): Pašreizējais skaitlis (sāk 5-15, beidzas 1000+)
+        prev_was_even (bool): Vai iepriekšējais rezultāts bija pāra (inversijas noteikumam)
+        inverted (bool): Vai šobrīd ir invertēti scoring noteikumi
+        
+        === Spēlētāju info ===
+        scores (list[int]): [Player 1 score, Player 2/Computer score]
+        names (list[str]): ["Player 1", "Player 2" vai "Computer"]
+        turn (int): 0 = Player 1, 1 = Player 2/Computer
+        
+        === Spēles moda ===
+        mode (int): 1 = Two Players, 2 = vs Computer
+        
+        === AI parametri ===
+        algo (module): minimax vai alphabeta modulis
+        algo_name (str): "Minimax" vai "Alpha-Beta"
+        
+        === Koka vēsture (all_trees) ===
+        all_trees (list[tuple]): Saraksts (move_num, from_num, tree_log)
+            move_num: Kurtais AI gājiens
+            from_num: Sākotnējais skaitlis meklēšanai
+            tree_log: list[dict] ar mezgliem:
+                {
+                    "id": int,           # Mezgla unikālais ID
+                    "parent": int/None,  # Vecāka ID
+                    "result": int,       # Skaitlis pēc gājiena
+                    "is_ai": bool,       # AI vai pretinieks
+                    "chosen": bool,      # Daļa no optimal ceļa?
+                    "pruned": bool       # Atgriezts (alpha-beta)?
+                }
+        move_number (int): Kopējais AI gājienu skaits līdz šim
+        
+        === Veiktspējas metriki ===
+        total_generated (int): Kopējais apsekoto mezglu skaits (visos gājienos)
+        total_evaluated (int): Kopējais lapu mezglu skaits
+        total_ai_time (float): Kopējais AI meklēšanas laiks (sekundēs)
+        
+        === Spēles stāvoklis ===
+        finished (bool): True ja skaitlis >= WIN_THRESHOLD
+    """
+    
     def __init__(self, mode: int, algo_choice: int, number: int):
         from logica import minimax, alphabeta
         self.number = number
@@ -196,7 +265,7 @@ class GameState:
         self.inverted = False
         self.turn = 0
         self.names = ["Player 1", "Player 2" if mode == 1 else "Computer"]
-        self.all_trees = []
+        self.all_trees = []  # Datu struktūra: list of (move_num, from_num, tree_log)
         self.move_number = 0
         self.total_generated = 0
         self.total_evaluated = 0
@@ -224,7 +293,16 @@ class GameState:
         return log
 
     def computer_move(self):
-        """Run the AI and return (multiplier, tree_log)."""
+        """
+        Palaiž AI un atgriež labāko gājienu.
+        
+        Datu struktūra: tree_log ir list[dict], kur katrs dict ir mezgls:
+        Nosūtīts uz pick() funkciju, kur to papildina ar visiem apsekotajiem mezgliem.
+        
+        Returns:
+            mult (int): 2 vai 3
+            turn_log (list[dict]): tree_log ar visiem mezgliem
+        """
         self.move_number += 1
         turn_log = []
         start_time = time.perf_counter()
@@ -236,6 +314,8 @@ class GameState:
         self.total_ai_time += move_time
         self.total_generated += stats["generated"]
         self.total_evaluated += stats["evaluated"]
+        # ═══ DATU STRUKTŪRA: all_trees papildināšana ═══
+        # Tiek pievienota jauna tuple ar šī gājiena koku un metriku
         self.all_trees.append((self.move_number, self.number, turn_log))
         return mult, turn_log
 
